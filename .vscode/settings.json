@@ -1,0 +1,29 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "xaver.clang-format",
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "files.associations": {
+    "__hash_table": "cpp",
+    "__split_buffer": "cpp",
+    "array": "cpp",
+    "bitset": "cpp",
+    "deque": "cpp",
+    "initializer_list": "cpp",
+    "queue": "cpp",
+    "stack": "cpp",
+    "string": "cpp",
+    "string_view": "cpp",
+    "unordered_map": "cpp",
+    "vector": "cpp",
+    "__bit_reference": "cpp",
+    "__node_handle": "cpp",
+    "limits": "cpp",
+    "locale": "cpp",
+    "optional": "cpp",
+    "ratio": "cpp",
+    "tuple": "cpp"
+  }
+}
