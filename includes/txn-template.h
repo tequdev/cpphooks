@@ -499,17 +499,17 @@ DEFINE_ARRAY_FIELD(sfHookEmissions, 2)
 DEFINE_ARRAY_FIELD(sfAmounts, 2)
 
 struct TransactionTemplateBase {
-  // Field<sfTransactionType> TransactionType;
-  // Field<sfFlags> Flags;
-  // Field<sfSequence> Sequence;
-  // Field<sfFirstLedgerSequence> FirstLedgerSequence;
-  // Field<sfLastLedgerSequence> LastLedgerSequence;
-  // Field<sfFee> Fee;
-  // Field<sfSigningPubKey> SigningPubKey;
-  // Field<sfAccount> Account;
-  // OptionalField<sfDestination> Destination;
-  // Field<sfEmitDetails> EmitDetails;
-  template <typename T> inline static void autofill(T txn) {
+  // Field<sfTransactionType> TransactionType; specify in each template
+  Field<sfFlags> Flags;
+  Field<sfSequence> Sequence;
+  Field<sfFirstLedgerSequence> FirstLedgerSequence;
+  Field<sfLastLedgerSequence> LastLedgerSequence;
+  Field<sfFee> Fee;
+  Field<sfSigningPubKey> SigningPubKey;
+  Field<sfAccount> Account;
+  Field<sfEmitDetails> EmitDetails;
+
+  template <typename TemplateType> inline void autofill(TemplateType *txn) {
     // TXN PREPARE: FirstLedgerSequence
     uint32_t fls = (uint32_t)ledger_seq() + 1;
     *(uint32_t *)(txn->FirstLedgerSequence.value) = FLIP_ENDIAN_32(fls);
@@ -524,7 +524,6 @@ struct TransactionTemplateBase {
     // TXN PREPARE: Fee
     {
       int64_t fee = etxn_fee_base(uint32_t(txn), sizeof(*txn));
-      trace_num(SBUF("Fee"), fee);
 
       uint8_t *b = txn->Fee.value;
       *b++ = 0b01000000 + ((fee >> 56) & 0b00111111);
@@ -539,23 +538,19 @@ struct TransactionTemplateBase {
   }
 };
 
-struct PaymentTemplate {
+struct PaymentTemplate : TransactionTemplateBase {
   Field<sfTransactionType> TransactionType = {.value = {0x00, ttPAYMENT}};
-  Field<sfAccount> Account;
   Field<sfDestination> Destination;
   Field<sfAmount> Amount;
+  inline void autofill() {
+    TransactionTemplateBase::autofill<PaymentTemplate>(this);
+  }
 };
 
-struct InvokeTemplate {
+struct InvokeTemplate : TransactionTemplateBase {
   Field<sfTransactionType> TransactionType = {.value = {0x00, ttINVOKE}};
-  Field<sfFlags> Flags;
-  Field<sfSequence> Sequence;
-  Field<sfFirstLedgerSequence> FirstLedgerSequence;
-  Field<sfLastLedgerSequence> LastLedgerSequence;
-  Field<sfFee> Fee;
-  Field<sfSigningPubKey> SigningPubKey;
-  Field<sfAccount> Account;
   OptionalField<sfDestination> Destination;
-  Field<sfEmitDetails> EmitDetails;
-  void autofill() { TransactionTemplateBase::autofill(this); }
+  inline void autofill() {
+    TransactionTemplateBase::autofill<InvokeTemplate>(this);
+  }
 };
