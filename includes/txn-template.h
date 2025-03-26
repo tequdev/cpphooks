@@ -154,7 +154,6 @@ template <uint32_t sfcode> struct OptionalField {};
   template <> struct Field<sfcode> {                                           \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);             \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
-    void setTT(uint16_t tt) {}                                                 \
   };                                                                           \
   template <> struct OptionalField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_1_##TYPE(sfcode);    \
@@ -171,6 +170,9 @@ template <uint32_t sfcode> struct OptionalField {};
   template <> struct Field<sfcode> {                                           \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);             \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
+    void setUint32(uint32_t value) {                                           \
+      *(uint32_t *)(this->value) = FLIP_ENDIAN_32(value);                      \
+    }                                                                          \
   };                                                                           \
   template <> struct OptionalField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_1_##TYPE(sfcode);    \
@@ -181,12 +183,18 @@ template <uint32_t sfcode> struct OptionalField {};
       for (int i = 0; i < CODE_SIZE(sfcode); i++)                              \
         code[i] = code_value[i];                                               \
     }                                                                          \
+    void setUint32(uint32_t value) {                                           \
+      *(uint32_t *)(this->value) = FLIP_ENDIAN_32(value);                      \
+    }                                                                          \
   };
 
 #define DEFINE_UINT64_FIELD(sfcode, TYPE)                                      \
   template <> struct Field<sfcode> {                                           \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);             \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
+    void setUint64(uint64_t value) {                                           \
+      *(uint64_t *)(this->value) = FLIP_ENDIAN_64(value);                      \
+    }                                                                          \
   };                                                                           \
   template <> struct OptionalField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_1_##TYPE(sfcode);    \
@@ -196,6 +204,9 @@ template <uint32_t sfcode> struct OptionalField {};
       uint8_t code_value[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);     \
       for (int i = 0; i < CODE_SIZE(sfcode); i++)                              \
         code[i] = code_value[i];                                               \
+    }                                                                          \
+    void setUint64(uint64_t value) {                                           \
+      *(uint64_t *)(this->value) = FLIP_ENDIAN_64(value);                      \
     }                                                                          \
   };
 
@@ -252,6 +263,17 @@ template <uint32_t sfcode> struct OptionalField {};
   template <> struct Field<sfcode> {                                           \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);             \
     uint8_t value[8] = {0x40};                                                 \
+    void setDrops(uint64_t drops) {                                            \
+      uint8_t *b = value;                                                      \
+      *b++ = 0b01000000 + ((drops >> 56) & 0b00111111);                        \
+      *b++ = (drops >> 48) & 0xFFU;                                            \
+      *b++ = (drops >> 40) & 0xFFU;                                            \
+      *b++ = (drops >> 32) & 0xFFU;                                            \
+      *b++ = (drops >> 24) & 0xFFU;                                            \
+      *b++ = (drops >> 16) & 0xFFU;                                            \
+      *b++ = (drops >> 8) & 0xFFU;                                             \
+      *b++ = (drops >> 0) & 0xFFU;                                             \
+    }                                                                          \
   };                                                                           \
   template <> struct OptionalField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_1_##TYPE(sfcode);    \
@@ -261,6 +283,17 @@ template <uint32_t sfcode> struct OptionalField {};
       uint8_t code_value[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);     \
       for (int i = 0; i < CODE_SIZE(sfcode); i++)                              \
         code[i] = code_value[i];                                               \
+    }                                                                          \
+    void setDrops(uint64_t drops) {                                            \
+      uint8_t *b = value;                                                      \
+      *b++ = 0b01000000 + ((drops >> 56) & 0b00111111);                        \
+      *b++ = (drops >> 48) & 0xFFU;                                            \
+      *b++ = (drops >> 40) & 0xFFU;                                            \
+      *b++ = (drops >> 32) & 0xFFU;                                            \
+      *b++ = (drops >> 24) & 0xFFU;                                            \
+      *b++ = (drops >> 16) & 0xFFU;                                            \
+      *b++ = (drops >> 8) & 0xFFU;                                             \
+      *b++ = (drops >> 0) & 0xFFU;                                             \
     }                                                                          \
   };
 
@@ -680,11 +713,11 @@ struct TransactionTemplateBase {
   template <typename TemplateType> inline void autofill(TemplateType *txn) {
     // TXN PREPARE: FirstLedgerSequence
     uint32_t fls = (uint32_t)ledger_seq() + 1;
-    *(uint32_t *)(txn->FirstLedgerSequence.value) = FLIP_ENDIAN_32(fls);
+    txn->FirstLedgerSequence.setUint32(fls);
 
     // TXN PREPARE: LastLedgerSequense
     uint32_t lls = fls + 4;
-    *(uint32_t *)(txn->LastLedgerSequence.value) = FLIP_ENDIAN_32(lls);
+    txn->LastLedgerSequence.setUint32(lls);
 
     // TXN PREPARE: Emit Metadata
     etxn_details(uint32_t(&txn->EmitDetails), 116U);
@@ -692,16 +725,7 @@ struct TransactionTemplateBase {
     // TXN PREPARE: Fee
     {
       int64_t fee = etxn_fee_base(uint32_t(txn), sizeof(*txn));
-
-      uint8_t *b = txn->Fee.value;
-      *b++ = 0b01000000 + ((fee >> 56) & 0b00111111);
-      *b++ = (fee >> 48) & 0xFFU;
-      *b++ = (fee >> 40) & 0xFFU;
-      *b++ = (fee >> 32) & 0xFFU;
-      *b++ = (fee >> 24) & 0xFFU;
-      *b++ = (fee >> 16) & 0xFFU;
-      *b++ = (fee >> 8) & 0xFFU;
-      *b++ = (fee >> 0) & 0xFFU;
+      txn->Fee.setDrops(fee);
     }
   }
 };
