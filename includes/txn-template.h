@@ -53,9 +53,15 @@ constexpr uint16_t field_size_by_sto(uint32_t sfcode) {
     return 32;
   case STI_AMOUNT:
     return 48;
-  case STI_VL:
-    // TODO
-    return 1;
+  case STI_VL: {
+    switch (sfcode) {
+    case sfSigningPubKey:
+      return 33;
+    default:
+      // TODO
+      return 1;
+    }
+  }
   case STI_ACCOUNT:
     return 20;
   case STI_OBJECT: {
@@ -262,7 +268,7 @@ template <uint32_t sfcode> struct OptionalField {};
 #define DEFINE_VL_FIELD(sfcode, TYPE)                                          \
   template <> struct Field<sfcode> {                                           \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);             \
-    uint8_t length[1] = {0x00};                                                \
+    uint8_t length[1] = {field_size_by_sto(sfcode)};                           \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
   };                                                                           \
   template <> struct OptionalField<sfcode> {                                   \
@@ -374,11 +380,11 @@ template <uint32_t sfcode> struct OptionalField {};
     uint8_t value[field_size_by_sto(sfcode)];                                  \
   };                                                                           \
   template <> struct OptionalField<sfcode> {                                   \
-    uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_1_##TYPE(sfcode);    \
+    uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_2_##TYPE(sfcode);    \
     uint8_t value[field_size_by_sto(sfcode)] = {                               \
         [0 ...(field_size_by_sto(sfcode) - 1)] = 0x99};                        \
     inline void useField() {                                                   \
-      uint8_t code_value[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);     \
+      uint8_t code_value[CODE_SIZE(sfcode)] = CODE_VALUE_2_##TYPE(sfcode);     \
       for (int i = 0; i < CODE_SIZE(sfcode); i++)                              \
         code[i] = code_value[i];                                               \
     }                                                                          \
