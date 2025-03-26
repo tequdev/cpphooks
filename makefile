@@ -1,5 +1,5 @@
 build:
-	wasmcc index.cpp -o index.wasm -Wl,--allow-undefined -std=c++17 -I./includes -O3
+	wasmcc index.cpp -o index.wasm -Wl,--allow-undefined -std=c++17 -I./includes -O3 -mllvm -inline-threshold=10000
 	wasm-opt index.wasm -o index.wasm \
 		--shrink-level=100000000 \
 		--coalesce-locals-learning \

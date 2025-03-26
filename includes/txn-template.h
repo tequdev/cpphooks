@@ -715,6 +715,13 @@ struct PaymentTemplate : TransactionTemplateBase {
   }
 };
 
+struct AccountSetTemplate : TransactionTemplateBase {
+  Field<sfTransactionType> TransactionType = {.value = {0x00, ttACCOUNT_SET}};
+  inline void autofill() {
+    TransactionTemplateBase::autofill<AccountSetTemplate>(this);
+  }
+};
+
 struct InvokeTemplate : TransactionTemplateBase {
   Field<sfTransactionType> TransactionType = {.value = {0x00, ttINVOKE}};
   OptionalField<sfDestination> Destination;
