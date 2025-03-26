@@ -44,7 +44,7 @@
 #define GUARD(maxiter) _g((1ULL << 31U) + __LINE__, (maxiter)+1)
 #define GUARDM(maxiter, n) _g(( (1ULL << 31U) + (__LINE__ << 16) + n), (maxiter)+1)
 
-#define SBUF(str) (uint32_t)(str), sizeof(str)
+#define SBUF(str) (uint32_t)(&str), sizeof(str)
 #define SVAR(x) &x, sizeof(x)
 
 #define REQUIRE(cond, str)\
