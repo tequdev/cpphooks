@@ -136,9 +136,9 @@ constexpr uint16_t field_size_by_sto(uint32_t sfcode) {
   }
 }
 
-template <uint32_t sfcode, uint16_t SIZE = 0> struct Field {};
+template <uint32_t sfcode, uint16_t SIZE = 0> struct TemplateField {};
 // template <uint32_t sfcode> struct Field {};
-template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
+template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalTemplateField {};
 // template <uint32_t sfcode> struct OptionalField {};
 
 #define CODE_SIZE(sfcode)                                                      \
@@ -164,21 +164,21 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
   { 0x99, 0x99, 0x99 }
 
 // #define DEFINE_XXX_FIELD(sfcode, TYPE)                                         \
-//   template <> struct Field<sfcode> {                                           \
+//   template <> struct TemplateField<sfcode> {                                           \
 //     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_2_##TYPE(sfcode);             \
 //     uint8_t value[field_size_by_sto(sfcode)];                                  \
 //   };                                                                           \
-//   template <> struct OptionalField<sfcode> {                                   \
+//   template <> struct OptionalTemplateField<sfcode> {                                   \
 //     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_2_##TYPE(sfcode);    \
 //     uint8_t value[field_size_by_sto(sfcode)] = {[0 ... (field_size_by_sto(sfcode)-1)] = 0x99};                   \
 //   };
 
 #define DEFINE_UINT8_FIELD(sfcode, TYPE)                                       \
-  template <> struct Field<sfcode> {                                           \
+  template <> struct TemplateField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_2_##TYPE(sfcode);             \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
   };                                                                           \
-  template <> struct OptionalField<sfcode> {                                   \
+  template <> struct OptionalTemplateField<sfcode> {                           \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_2_##TYPE(sfcode);    \
     uint8_t value[field_size_by_sto(sfcode)] = {                               \
         [0 ...(field_size_by_sto(sfcode) - 1)] = 0x99};                        \
@@ -190,11 +190,11 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
   };
 
 #define DEFINE_UINT16_FIELD(sfcode, TYPE)                                      \
-  template <> struct Field<sfcode> {                                           \
+  template <> struct TemplateField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);             \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
   };                                                                           \
-  template <> struct OptionalField<sfcode> {                                   \
+  template <> struct OptionalTemplateField<sfcode> {                           \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_1_##TYPE(sfcode);    \
     uint8_t value[field_size_by_sto(sfcode)] = {                               \
         [0 ...(field_size_by_sto(sfcode) - 1)] = 0x99};                        \
@@ -206,14 +206,14 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
   };
 
 #define DEFINE_UINT32_FIELD(sfcode, TYPE)                                      \
-  template <> struct Field<sfcode> {                                           \
+  template <> struct TemplateField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);             \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
     void setUint32(uint32_t value) {                                           \
       *(uint32_t *)(this->value) = FLIP_ENDIAN_32(value);                      \
     }                                                                          \
   };                                                                           \
-  template <> struct OptionalField<sfcode> {                                   \
+  template <> struct OptionalTemplateField<sfcode> {                           \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_1_##TYPE(sfcode);    \
     uint8_t value[field_size_by_sto(sfcode)] = {                               \
         [0 ...(field_size_by_sto(sfcode) - 1)] = 0x99};                        \
@@ -228,14 +228,14 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
   };
 
 #define DEFINE_UINT64_FIELD(sfcode, TYPE)                                      \
-  template <> struct Field<sfcode> {                                           \
+  template <> struct TemplateField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);             \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
     void setUint64(uint64_t value) {                                           \
       *(uint64_t *)(this->value) = FLIP_ENDIAN_64(value);                      \
     }                                                                          \
   };                                                                           \
-  template <> struct OptionalField<sfcode> {                                   \
+  template <> struct OptionalTemplateField<sfcode> {                           \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_1_##TYPE(sfcode);    \
     uint8_t value[field_size_by_sto(sfcode)] = {                               \
         [0 ...(field_size_by_sto(sfcode) - 1)] = 0x99};                        \
@@ -250,11 +250,11 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
   };
 
 #define DEFINE_UINT128_FIELD(sfcode, TYPE)                                     \
-  template <> struct Field<sfcode> {                                           \
+  template <> struct TemplateField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);             \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
   };                                                                           \
-  template <> struct OptionalField<sfcode> {                                   \
+  template <> struct OptionalTemplateField<sfcode> {                           \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_1_##TYPE(sfcode);    \
     uint8_t value[field_size_by_sto(sfcode)] = {                               \
         [0 ...(field_size_by_sto(sfcode) - 1)] = 0x99};                        \
@@ -266,11 +266,11 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
   };
 
 #define DEFINE_UINT256_FIELD(sfcode, TYPE)                                     \
-  template <> struct Field<sfcode> {                                           \
+  template <> struct TemplateField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);             \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
   };                                                                           \
-  template <> struct OptionalField<sfcode> {                                   \
+  template <> struct OptionalTemplateField<sfcode> {                           \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_1_##TYPE(sfcode);    \
     uint8_t value[field_size_by_sto(sfcode)] = {                               \
         [0 ...(field_size_by_sto(sfcode) - 1)] = 0x99};                        \
@@ -283,11 +283,11 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
 
 // TODO: issuer, currency, value, setNativeAmount, setIOUAmount
 #define DEFINE_AMOUNT_FIELD(sfcode, TYPE)                                      \
-  template <> struct Field<sfcode> {                                           \
+  template <> struct TemplateField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);             \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
   };                                                                           \
-  template <> struct OptionalField<sfcode> {                                   \
+  template <> struct OptionalTemplateField<sfcode> {                           \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_1_##TYPE(sfcode);    \
     uint8_t value[field_size_by_sto(sfcode)] = {                               \
         [0 ...(field_size_by_sto(sfcode) - 1)] = 0x99};                        \
@@ -299,7 +299,7 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
   };
 
 #define DEFINE_NATIVE_AMOUNT_FIELD(sfcode, TYPE)                               \
-  template <> struct Field<sfcode> {                                           \
+  template <> struct TemplateField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);             \
     uint8_t value[8] = {0x40};                                                 \
     void setDrops(uint64_t drops) {                                            \
@@ -314,7 +314,7 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
       *b++ = (drops >> 0) & 0xFFU;                                             \
     }                                                                          \
   };                                                                           \
-  template <> struct OptionalField<sfcode> {                                   \
+  template <> struct OptionalTemplateField<sfcode> {                           \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_1_##TYPE(sfcode);    \
     uint8_t value[field_size_by_sto(sfcode)] = {                               \
         [0 ...(field_size_by_sto(sfcode) - 1)] = 0x99};                        \
@@ -338,12 +338,12 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
 
 // TODO: length
 #define DEFINE_VL_FIELD(sfcode, TYPE)                                          \
-  template <> struct Field<sfcode> {                                           \
+  template <> struct TemplateField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);             \
     uint8_t length[1] = {field_size_by_sto(sfcode)};                           \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
   };                                                                           \
-  template <> struct OptionalField<sfcode> {                                   \
+  template <> struct OptionalTemplateField<sfcode> {                           \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_1_##TYPE(sfcode);    \
     uint8_t length[1] = {0x99};                                                \
     uint8_t value[field_size_by_sto(sfcode)] = {                               \
@@ -357,12 +357,12 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
   };
 
 #define DEFINE_ACCOUNT_FIELD(sfcode, TYPE)                                     \
-  template <> struct Field<sfcode> {                                           \
+  template <> struct TemplateField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);             \
     uint8_t length[1] = {0x14};                                                \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
   };                                                                           \
-  template <> struct OptionalField<sfcode> {                                   \
+  template <> struct OptionalTemplateField<sfcode> {                           \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_1_##TYPE(sfcode);    \
     uint8_t length[1] = {0x99};                                                \
     uint8_t value[field_size_by_sto(sfcode)] = {                               \
@@ -377,13 +377,13 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
 
 // TODO: value
 #define DEFINE_OBJECT_FIELD(sfcode, TYPE)                                      \
-  template <> struct Field<sfcode> {                                           \
+  template <> struct TemplateField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);             \
     uint8_t prefix[1] = {0x7c};                                                \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
     uint8_t postfix[1] = {0xe1};                                               \
   };                                                                           \
-  template <> struct OptionalField<sfcode> {                                   \
+  template <> struct OptionalTemplateField<sfcode> {                           \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_1_##TYPE(sfcode);    \
     uint8_t prefix[1] = {0x99};                                                \
     uint8_t value[field_size_by_sto(sfcode)] = {                               \
@@ -400,16 +400,16 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
 
 // TODO: value
 #define DEFINE_ARRAY_FIELD(sfcode, TYPE, InnerFieldCode, SIZE)                 \
-  template <> struct Field<sfcode, SIZE> {                                     \
+  template <> struct TemplateField<sfcode, SIZE> {                             \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);             \
     uint8_t prefix[1] = {0xf4};                                                \
-    Field<InnerFieldCode> values[SIZE];                                        \
+    TemplateField<InnerFieldCode> values[SIZE];                                \
     uint8_t postfix[1] = {0xf1};                                               \
   };                                                                           \
-  template <> struct OptionalField<sfcode, SIZE> {                             \
+  template <> struct OptionalTemplateField<sfcode, SIZE> {                     \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_1_##TYPE(sfcode);    \
     uint8_t prefix[1] = {0x99};                                                \
-    OptionalField<InnerFieldCode> values[SIZE];                                \
+    OptionalTemplateField<InnerFieldCode> values[SIZE];                        \
     uint8_t postfix[1] = {0x99};                                               \
     inline void useField() {                                                   \
       uint8_t code_value[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);     \
@@ -422,11 +422,11 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
 
 // TODO: issuer, currency?
 #define DEFINE_UINT160_FIELD(sfcode, TYPE)                                     \
-  template <> struct Field<sfcode> {                                           \
+  template <> struct TemplateField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_2_##TYPE(sfcode);             \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
   };                                                                           \
-  template <> struct OptionalField<sfcode> {                                   \
+  template <> struct OptionalTemplateField<sfcode> {                           \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_2_##TYPE(sfcode);    \
     uint8_t value[field_size_by_sto(sfcode)] = {                               \
         [0 ...(field_size_by_sto(sfcode) - 1)] = 0x99};                        \
@@ -439,7 +439,7 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
 
 // TODO:
 #define DEFINE_PATHSET_FIELD(sfcode, TYPE)                                     \
-  template <> struct Field<sfcode> {                                           \
+  template <> struct TemplateField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_2_##TYPE(sfcode);             \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
   };
@@ -447,7 +447,7 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
 // TODO: length
 // SIZE 1~6 (32~192)
 #define DEFINE_VECTOR256_FIELD_1(sfcode, TYPE, SIZE)                           \
-  template <> struct Field<sfcode, SIZE> {                                     \
+  template <> struct TemplateField<sfcode, SIZE> {                             \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_2_##TYPE(sfcode);             \
     uint8_t length[1] = {SIZE * 32};                                           \
     uint8_t value[SIZE][32];                                                   \
@@ -459,7 +459,7 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
       *(uint64_t *)(buf + 24) = *(uint64_t *)(newValue + 24);                  \
     }                                                                          \
   };                                                                           \
-  template <> struct OptionalField<sfcode, SIZE> {                             \
+  template <> struct OptionalTemplateField<sfcode, SIZE> {                     \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_2_##TYPE(sfcode);    \
     uint8_t length[1] = {SIZE * 32};                                           \
     uint8_t value[SIZE][32] = {[0 ...(SIZE - 1)] = {[0 ...(32 - 1)] = 0x99}};  \
@@ -480,7 +480,7 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
 
 // SIZE 7~390 (193~12480)
 #define DEFINE_VECTOR256_FIELD_2(sfcode, TYPE, SIZE)                           \
-  template <> struct Field<sfcode, SIZE> {                                     \
+  template <> struct TemplateField<sfcode, SIZE> {                             \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_2_##TYPE(sfcode);             \
     uint8_t length[2] = {                                                      \
         193 + static_cast<unsigned char>((SIZE * 32 - 193) >> 8),              \
@@ -494,7 +494,7 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
       *(uint64_t *)(buf + 24) = *(uint64_t *)(newValue + 24);                  \
     }                                                                          \
   };                                                                           \
-  template <> struct OptionalField<sfcode, SIZE> {                             \
+  template <> struct OptionalTemplateField<sfcode, SIZE> {                     \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_2_##TYPE(sfcode);    \
     uint8_t length[2] = {0x99, 0x99};                                          \
     uint8_t value[SIZE][32] = {[0 ...(SIZE - 1)] = {[0 ...(32 - 1)] = 0x99}};  \
@@ -515,25 +515,25 @@ template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
   };
 
 #define DEFINE_UINT96_FIELD(sfcode, TYPE)                                      \
-  template <> struct Field<sfcode> {                                           \
+  template <> struct TemplateField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_2_##TYPE(sfcode);             \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
   };
 
 #define DEFINE_UINT192_FIELD(sfcode, TYPE)                                     \
-  template <> struct Field<sfcode> {                                           \
+  template <> struct TemplateField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_2_##TYPE(sfcode);             \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
   };
 
 #define DEFINE_UINT384_FIELD(sfcode, TYPE)                                     \
-  template <> struct Field<sfcode> {                                           \
+  template <> struct TemplateField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_2_##TYPE(sfcode);             \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
   };
 
 #define DEFINE_UINT512_FIELD(sfcode, TYPE)                                     \
-  template <> struct Field<sfcode> {                                           \
+  template <> struct TemplateField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_2_##TYPE(sfcode);             \
     uint8_t value[field_size_by_sto(sfcode)];                                  \
   };
@@ -841,14 +841,14 @@ DEFINE_MULTIPLE_FIELD_INDICEX_32(DEFINE_ONE_AMOUNTS)
 
 struct TransactionTemplateBase {
   // Field<sfTransactionType> TransactionType; specify in each template
-  Field<sfFlags> Flags;
-  Field<sfSequence> Sequence;
-  Field<sfFirstLedgerSequence> FirstLedgerSequence;
-  Field<sfLastLedgerSequence> LastLedgerSequence;
-  Field<sfFee> Fee;
-  Field<sfSigningPubKey> SigningPubKey;
-  Field<sfAccount> Account;
-  Field<sfEmitDetails> EmitDetails;
+  TemplateField<sfFlags> Flags;
+  TemplateField<sfSequence> Sequence;
+  TemplateField<sfFirstLedgerSequence> FirstLedgerSequence;
+  TemplateField<sfLastLedgerSequence> LastLedgerSequence;
+  TemplateField<sfFee> Fee;
+  TemplateField<sfSigningPubKey> SigningPubKey;
+  TemplateField<sfAccount> Account;
+  TemplateField<sfEmitDetails> EmitDetails;
 
   template <typename TemplateType> inline void autofill(TemplateType *txn) {
     // TXN PREPARE: FirstLedgerSequence
@@ -871,24 +871,27 @@ struct TransactionTemplateBase {
 };
 
 struct PaymentTemplate : TransactionTemplateBase {
-  Field<sfTransactionType> TransactionType = {.value = {0x00, ttPAYMENT}};
-  Field<sfDestination> Destination;
-  Field<sfAmount> Amount;
+  TemplateField<sfTransactionType> TransactionType = {
+      .value = {0x00, ttPAYMENT}};
+  TemplateField<sfDestination> Destination;
+  TemplateField<sfAmount> Amount;
   inline void autofill() {
     TransactionTemplateBase::autofill<PaymentTemplate>(this);
   }
 };
 
 struct AccountSetTemplate : TransactionTemplateBase {
-  Field<sfTransactionType> TransactionType = {.value = {0x00, ttACCOUNT_SET}};
+  TemplateField<sfTransactionType> TransactionType = {
+      .value = {0x00, ttACCOUNT_SET}};
   inline void autofill() {
     TransactionTemplateBase::autofill<AccountSetTemplate>(this);
   }
 };
 
 struct InvokeTemplate : TransactionTemplateBase {
-  Field<sfTransactionType> TransactionType = {.value = {0x00, ttINVOKE}};
-  OptionalField<sfDestination> Destination;
+  TemplateField<sfTransactionType> TransactionType = {
+      .value = {0x00, ttINVOKE}};
+  OptionalTemplateField<sfDestination> Destination;
   inline void autofill() {
     TransactionTemplateBase::autofill<InvokeTemplate>(this);
   }
