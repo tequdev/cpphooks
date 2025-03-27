@@ -1,5 +1,42 @@
 #include "macro.h"
 
+// clang-format off
+#define DEFINE_MULTIPLE_FIELD_INDICEX_8(X)                                    \
+  X(1) X(2) X(3) X(4) X(5) X(6) X(7) X(8)
+
+#define DEFINE_MULTIPLE_FIELD_INDICEX_10(X)                                    \
+  X(1) X(2) X(3) X(4) X(5) X(6) X(7) X(8) X(9) X(10)
+
+#define DEFINE_MULTIPLE_FIELD_INDICEX_16(X)                                    \
+  X(1) X(2) X(3) X(4) X(5) X(6) X(7) X(8) X(9) X(10) X(11) X(12) X(13) X(14)   \
+  X(15) X(16)
+
+#define DEFINE_MULTIPLE_FIELD_INDICEX_32(X)                                    \
+  X(1) X(2) X(3) X(4) X(5) X(6) X(7) X(8) X(9) X(10) X(11) X(12) X(13) X(14)   \
+  X(15) X(16) X(17) X(18) X(19) X(20) X(21) X(22) X(23) X(24) X(25) X(26) X(27)\
+  X(28) X(29) X(30) X(31) X(32)
+
+#define DEFINE_MULTIPLE_FIELD_INDICEX_64(X)                                    \
+  X(1) X(2) X(3) X(4) X(5) X(6) X(7) X(8) X(9) X(10) X(11) X(12) X(13) X(14)   \
+  X(15) X(16) X(17) X(18) X(19) X(20) X(21) X(22) X(23) X(24) X(25) X(26) X(27)\
+  X(28) X(29) X(30) X(31) X(32) X(33) X(34) X(35) X(36) X(37) X(38) X(39) X(40) \
+  X(41) X(42) X(43) X(44) X(45) X(46) X(47) X(48) X(49) X(50) X(51) X(52) X(53) \
+  X(54) X(55) X(56) X(57) X(58) X(59) X(60) X(61) X(62) X(63) X(64)
+
+#define DEFINE_MULTIPLE_FIELD_INDICEX_512(X)                                   \
+  X(1) X(2) X(3) X(4) X(5) X(6) X(7) X(8) X(9) X(10) X(11) X(12) X(13) X(14)   \
+  X(15) X(16) X(17) X(18) X(19) X(20) X(21) X(22) X(23) X(24) X(25) X(26) X(27)\
+  X(28) X(29) X(30) X(31) X(32) X(33) X(34) X(35) X(36) X(37) X(38) X(39) X(40) \
+  X(41) X(42) X(43) X(44) X(45) X(46) X(47) X(48) X(49) X(50) X(51) X(52) X(53) \
+  X(54) X(55) X(56) X(57) X(58) X(59) X(60) X(61) X(62) X(63) X(64) X(65) X(66) X(67)\
+  X(68) X(69) X(70) X(71) X(72) X(73) X(74) X(75) X(76) X(77) X(78) X(79) X(80) \
+  X(81) X(82) X(83) X(84) X(85) X(86) X(87) X(88) X(89) X(90) X(91) X(92) X(93) \
+  X(94) X(95) X(96) X(97) X(98) X(99) X(100) X(101) X(102) X(103) X(104) X(105) \
+  X(106) X(107) X(108) X(109) X(110) X(111) X(112) X(113) X(114) X(115) X(116) X(117) \
+  X(118) X(119) X(120) X(121) X(122) X(123) X(124) X(125) X(126) X(127) X(128)
+
+// clang-format on
+
 enum SerializedTypeID {
   // special types
   STI_UNKNOWN = -2,
@@ -360,18 +397,17 @@ template <uint32_t sfcode> struct OptionalField {};
   };
 
 // TODO: value
-#define DEFINE_ARRAY_FIELD(sfcode, TYPE)                                       \
+#define DEFINE_ARRAY_FIELD(sfcode, TYPE, InnerFieldCode, SIZE)                 \
   template <> struct Field<sfcode> {                                           \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);             \
     uint8_t prefix[1] = {0xf4};                                                \
-    uint8_t value[field_size_by_sto(sfcode)];                                  \
+    Field<InnerFieldCode> values[SIZE];                                        \
     uint8_t postfix[1] = {0xf1};                                               \
   };                                                                           \
   template <> struct OptionalField<sfcode> {                                   \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_1_##TYPE(sfcode);    \
     uint8_t prefix[1] = {0x99};                                                \
-    uint8_t value[field_size_by_sto(sfcode)] = {                               \
-        [0 ...(field_size_by_sto(sfcode) - 1)] = 0x99};                        \
+    OptionalField<InnerFieldCode> values[SIZE];                                \
     uint8_t postfix[1] = {0x99};                                               \
     inline void useField() {                                                   \
       uint8_t code_value[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);     \
@@ -663,14 +699,8 @@ DEFINE_VECTOR256_FIELD(sfAmendments, 1, 1)
 DEFINE_VECTOR256_FIELD(sfNFTokenOffers, 1, 1)
 DEFINE_VECTOR256_FIELD(sfHookNamespaces, 1, 1)
 
-#define DEFINE_MULTIPLE_FIELD_INDICEX_16(X)                                    \
-  X(1)                                                                         \
-  X(2)                                                                         \
-  X(3) X(4) X(5) X(6) X(7) X(8) X(9) X(10) X(11) X(12) X(13) X(14) X(15) X(16)
-
 #define DEFINE_ONE_URI_TOKEN_IDS(idx)                                          \
   DEFINE_VECTOR256_FIELD(sfURITokenIDs, 2, idx)
-
 DEFINE_MULTIPLE_FIELD_INDICEX_16(DEFINE_ONE_URI_TOKEN_IDS)
 
 DEFINE_PATHSET_FIELD(sfPaths, 1)
@@ -703,25 +733,54 @@ DEFINE_OBJECT_FIELD(sfHookEmission, 2)
 DEFINE_OBJECT_FIELD(sfMintURIToken, 2)
 DEFINE_OBJECT_FIELD(sfAmountEntry, 2)
 
-DEFINE_ARRAY_FIELD(sfSigners, 1)
-DEFINE_ARRAY_FIELD(sfSignerEntries, 1)
-DEFINE_ARRAY_FIELD(sfTemplate, 1)
-DEFINE_ARRAY_FIELD(sfNecessary, 1)
-DEFINE_ARRAY_FIELD(sfSufficient, 1)
-DEFINE_ARRAY_FIELD(sfAffectedNodes, 1)
-DEFINE_ARRAY_FIELD(sfMemos, 1)
-DEFINE_ARRAY_FIELD(sfNFTokens, 1)
-DEFINE_ARRAY_FIELD(sfHooks, 1)
-DEFINE_ARRAY_FIELD(sfMajorities, 2)
-DEFINE_ARRAY_FIELD(sfDisabledValidators, 2)
-DEFINE_ARRAY_FIELD(sfHookExecutions, 2)
-DEFINE_ARRAY_FIELD(sfHookParameters, 2)
-DEFINE_ARRAY_FIELD(sfHookGrants, 2)
-DEFINE_ARRAY_FIELD(sfGenesisMints, 2)
-DEFINE_ARRAY_FIELD(sfActiveValidators, 2)
-DEFINE_ARRAY_FIELD(sfImportVLKeys, 2)
-DEFINE_ARRAY_FIELD(sfHookEmissions, 2)
-DEFINE_ARRAY_FIELD(sfAmounts, 2)
+#define DEFINE_ONE_SIGNERS(idx) DEFINE_ARRAY_FIELD(sfSigners, 1, sfSigner, idx)
+DEFINE_MULTIPLE_FIELD_INDICEX_32(DEFINE_ONE_SIGNERS)
+#define DEFINE_ONE_SIGNER_ENTRIES(idx)                                         \
+  DEFINE_ARRAY_FIELD(sfSignerEntries, 1, sfSignerEntry, idx)
+DEFINE_MULTIPLE_FIELD_INDICEX_32(DEFINE_ONE_SIGNER_ENTRIES)
+DEFINE_ARRAY_FIELD(sfTemplate, 1, sfTemplateEntry, 1)
+// DEFINE_ARRAY_FIELD(sfNecessary, 1)
+// DEFINE_ARRAY_FIELD(sfSufficient, 1)
+// for sfModifiedNode, sfCreatedNode, sfDeletedNode
+// DEFINE_ARRAY_FIELD(sfAffectedNodes, 1)
+#define DEFINE_ONE_MEMOS(idx) DEFINE_ARRAY_FIELD(sfMemos, 1, sfMemo, idx)
+DEFINE_MULTIPLE_FIELD_INDICEX_16(DEFINE_ONE_MEMOS)
+#define DEFINE_ONE_NFTOKENS(idx)                                               \
+  DEFINE_ARRAY_FIELD(sfNFTokens, 1, sfNFToken, idx)
+DEFINE_MULTIPLE_FIELD_INDICEX_32(DEFINE_ONE_NFTOKENS)
+#define DEFINE_ONE_HOOKS(idx) DEFINE_ARRAY_FIELD(sfHooks, 1, sfHook, idx)
+DEFINE_MULTIPLE_FIELD_INDICEX_10(DEFINE_ONE_HOOKS)
+#define DEFINE_ONE_MAJORITIES(idx)                                             \
+  DEFINE_ARRAY_FIELD(sfMajorities, 2, sfMajority, idx)
+DEFINE_MULTIPLE_FIELD_INDICEX_32(DEFINE_ONE_MAJORITIES)
+#define DEFINE_ONE_DISABLED_VALIDATORS(idx)                                    \
+  DEFINE_ARRAY_FIELD(sfDisabledValidators, 2, sfDisabledValidator, idx)
+DEFINE_MULTIPLE_FIELD_INDICEX_32(DEFINE_ONE_DISABLED_VALIDATORS)
+#define DEFINE_ONE_HOOK_EXECUTIONS(idx)                                        \
+  DEFINE_ARRAY_FIELD(sfHookExecutions, 2, sfHookExecution, idx)
+DEFINE_MULTIPLE_FIELD_INDICEX_64(DEFINE_ONE_HOOK_EXECUTIONS)
+#define DEFINE_ONE_HOOK_PARAMETERS(idx)                                        \
+  DEFINE_ARRAY_FIELD(sfHookParameters, 2, sfHookParameter, idx)
+DEFINE_MULTIPLE_FIELD_INDICEX_16(DEFINE_ONE_HOOK_PARAMETERS)
+#define DEFINE_ONE_HOOK_GRANTS(idx)                                            \
+  DEFINE_ARRAY_FIELD(sfHookGrants, 2, sfHookGrant, idx)
+DEFINE_MULTIPLE_FIELD_INDICEX_8(DEFINE_ONE_HOOK_GRANTS)
+#define DEFINE_ONE_GENESIS_MINTS(idx)                                          \
+  DEFINE_ARRAY_FIELD(sfGenesisMints, 2, sfGenesisMint, idx)
+// MAX: 512
+DEFINE_MULTIPLE_FIELD_INDICEX_64(DEFINE_ONE_GENESIS_MINTS)
+#define DEFINE_ONE_ACTIVE_VALIDATORS(idx)                                      \
+  DEFINE_ARRAY_FIELD(sfActiveValidators, 2, sfActiveValidator, idx)
+DEFINE_MULTIPLE_FIELD_INDICEX_32(DEFINE_ONE_ACTIVE_VALIDATORS)
+#define DEFINE_ONE_IMPORT_VL_KEYS(idx)                                         \
+  DEFINE_ARRAY_FIELD(sfImportVLKeys, 2, sfImportVLKey, idx)
+DEFINE_MULTIPLE_FIELD_INDICEX_16(DEFINE_ONE_IMPORT_VL_KEYS)
+#define DEFINE_ONE_HOOK_EMISSIONS(idx)                                         \
+  DEFINE_ARRAY_FIELD(sfHookEmissions, 2, sfHookEmission, idx)
+DEFINE_MULTIPLE_FIELD_INDICEX_32(DEFINE_ONE_HOOK_EMISSIONS)
+#define DEFINE_ONE_AMOUNTS(idx)                                                \
+  DEFINE_ARRAY_FIELD(sfAmounts, 2, sfAmountEntry, idx)
+DEFINE_MULTIPLE_FIELD_INDICEX_32(DEFINE_ONE_AMOUNTS)
 
 struct TransactionTemplateBase {
   // Field<sfTransactionType> TransactionType; specify in each template
