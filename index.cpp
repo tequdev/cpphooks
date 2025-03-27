@@ -32,6 +32,10 @@ extern "C" int64_t hook(uint32_t reserved) {
   _g(1, 1);
   etxn_reserve(1);
 
+  OtxnTransaction tx;
+  trace(SBUF("Account"), SBUF(tx.getFieldAccount(sfAccount)), 1);
+  trace_num(SBUF("Sequence"), tx.getFieldU32(sfSequence).value);
+
   uint8_t hook_acc[20];
   hook_account(SBUF(hook_acc));
 

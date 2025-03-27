@@ -44,8 +44,9 @@
 
 #include "error.h"
 #include "extern.h"
-#include "sfcodes.h"
 #include "macro.h"
+#include "otxn.h"
+#include "sfcodes.h"
 #include "tts.h"
 #include "txn-template.h"
 
