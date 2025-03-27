@@ -136,8 +136,10 @@ constexpr uint16_t field_size_by_sto(uint32_t sfcode) {
   }
 }
 
-template <uint32_t sfcode> struct Field {};
-template <uint32_t sfcode> struct OptionalField {};
+template <uint32_t sfcode, uint16_t SIZE = 0> struct Field {};
+// template <uint32_t sfcode> struct Field {};
+template <uint32_t sfcode, uint16_t SIZE = 0> struct OptionalField {};
+// template <uint32_t sfcode> struct OptionalField {};
 
 #define CODE_SIZE(sfcode)                                                      \
   (1 + (TYPE_CODE(sfcode) >= 16 ? 1 : 0) + (FIELD_CODE(sfcode) >= 16 ? 1 : 0))
@@ -398,13 +400,13 @@ template <uint32_t sfcode> struct OptionalField {};
 
 // TODO: value
 #define DEFINE_ARRAY_FIELD(sfcode, TYPE, InnerFieldCode, SIZE)                 \
-  template <> struct Field<sfcode> {                                           \
+  template <> struct Field<sfcode, SIZE> {                                     \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_1_##TYPE(sfcode);             \
     uint8_t prefix[1] = {0xf4};                                                \
     Field<InnerFieldCode> values[SIZE];                                        \
     uint8_t postfix[1] = {0xf1};                                               \
   };                                                                           \
-  template <> struct OptionalField<sfcode> {                                   \
+  template <> struct OptionalField<sfcode, SIZE> {                             \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_1_##TYPE(sfcode);    \
     uint8_t prefix[1] = {0x99};                                                \
     OptionalField<InnerFieldCode> values[SIZE];                                \
@@ -443,8 +445,9 @@ template <uint32_t sfcode> struct OptionalField {};
   };
 
 // TODO: length
-#define DEFINE_VECTOR256_FIELD(sfcode, TYPE, SIZE)                             \
-  template <> struct Field<sfcode> {                                           \
+// SIZE 1~6 (32~192)
+#define DEFINE_VECTOR256_FIELD_1(sfcode, TYPE, SIZE)                           \
+  template <> struct Field<sfcode, SIZE> {                                     \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_2_##TYPE(sfcode);             \
     uint8_t length[1] = {SIZE * 32};                                           \
     uint8_t value[SIZE][32];                                                   \
@@ -456,14 +459,51 @@ template <uint32_t sfcode> struct OptionalField {};
       *(uint64_t *)(buf + 24) = *(uint64_t *)(newValue + 24);                  \
     }                                                                          \
   };                                                                           \
-  template <> struct OptionalField<sfcode> {                                   \
+  template <> struct OptionalField<sfcode, SIZE> {                             \
     uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_2_##TYPE(sfcode);    \
-    uint8_t value[SIZE][32] = {[0 ...(SIZE - 1)] = {[0 ...(32 - 1)] = 0x99}};  \
     uint8_t length[1] = {SIZE * 32};                                           \
+    uint8_t value[SIZE][32] = {[0 ...(SIZE - 1)] = {[0 ...(32 - 1)] = 0x99}};  \
     inline void useField() {                                                   \
       uint8_t code_value[CODE_SIZE(sfcode)] = CODE_VALUE_2_##TYPE(sfcode);     \
       for (int i = 0; i < CODE_SIZE(sfcode); i++)                              \
         code[i] = code_value[i];                                               \
+      length[0] = SIZE * 32;                                                   \
+    }                                                                          \
+    void setValue(uint8_t index, uint8_t *newValue) {                          \
+      unsigned char *buf = (unsigned char *)value[index];                      \
+      *(uint64_t *)(buf + 0) = *(uint64_t *)(newValue + 0);                    \
+      *(uint64_t *)(buf + 8) = *(uint64_t *)(newValue + 8);                    \
+      *(uint64_t *)(buf + 16) = *(uint64_t *)(newValue + 16);                  \
+      *(uint64_t *)(buf + 24) = *(uint64_t *)(newValue + 24);                  \
+    }                                                                          \
+  };
+
+// SIZE 7~390 (193~12480)
+#define DEFINE_VECTOR256_FIELD_2(sfcode, TYPE, SIZE)                           \
+  template <> struct Field<sfcode, SIZE> {                                     \
+    uint8_t code[CODE_SIZE(sfcode)] = CODE_VALUE_2_##TYPE(sfcode);             \
+    uint8_t length[2] = {                                                      \
+        193 + static_cast<unsigned char>((SIZE * 32 - 193) >> 8),              \
+        (SIZE * 32 - 193) & 0xff};                                             \
+    uint8_t value[SIZE][32];                                                   \
+    void setValue(uint8_t index, uint8_t *newValue) {                          \
+      unsigned char *buf = (unsigned char *)value[index];                      \
+      *(uint64_t *)(buf + 0) = *(uint64_t *)(newValue + 0);                    \
+      *(uint64_t *)(buf + 8) = *(uint64_t *)(newValue + 8);                    \
+      *(uint64_t *)(buf + 16) = *(uint64_t *)(newValue + 16);                  \
+      *(uint64_t *)(buf + 24) = *(uint64_t *)(newValue + 24);                  \
+    }                                                                          \
+  };                                                                           \
+  template <> struct OptionalField<sfcode, SIZE> {                             \
+    uint8_t code[CODE_SIZE(sfcode)] = CODE_OPTIONAL_VALUE_2_##TYPE(sfcode);    \
+    uint8_t length[2] = {0x99, 0x99};                                          \
+    uint8_t value[SIZE][32] = {[0 ...(SIZE - 1)] = {[0 ...(32 - 1)] = 0x99}};  \
+    inline void useField() {                                                   \
+      uint8_t code_value[CODE_SIZE(sfcode)] = CODE_VALUE_2_##TYPE(sfcode);     \
+      for (int i = 0; i < CODE_SIZE(sfcode); i++)                              \
+        code[i] = code_value[i];                                               \
+      length[0] = 193 + static_cast<unsigned char>((SIZE * 32 - 193) >> 8);    \
+      length[1] = (SIZE * 32 - 193) & 0xff;                                    \
     }                                                                          \
     void setValue(uint8_t index, uint8_t *newValue) {                          \
       unsigned char *buf = (unsigned char *)value[index];                      \
@@ -693,15 +733,32 @@ DEFINE_ACCOUNT_FIELD(sfEmitCallback, 1)
 DEFINE_ACCOUNT_FIELD(sfHookAccount, 2)
 DEFINE_ACCOUNT_FIELD(sfInform, 2)
 
-DEFINE_VECTOR256_FIELD(sfIndexes, 1, 1)
-DEFINE_VECTOR256_FIELD(sfHashes, 1, 1)
-DEFINE_VECTOR256_FIELD(sfAmendments, 1, 1)
-DEFINE_VECTOR256_FIELD(sfNFTokenOffers, 1, 1)
-DEFINE_VECTOR256_FIELD(sfHookNamespaces, 1, 1)
+DEFINE_VECTOR256_FIELD_1(sfIndexes, 1, 1)
+DEFINE_VECTOR256_FIELD_1(sfHashes, 1, 1)
+DEFINE_VECTOR256_FIELD_1(sfAmendments, 1, 1)
+DEFINE_VECTOR256_FIELD_1(sfNFTokenOffers, 1, 1)
+DEFINE_VECTOR256_FIELD_1(sfHookNamespaces, 1, 1)
 
-#define DEFINE_ONE_URI_TOKEN_IDS(idx)                                          \
-  DEFINE_VECTOR256_FIELD(sfURITokenIDs, 2, idx)
-DEFINE_MULTIPLE_FIELD_INDICEX_16(DEFINE_ONE_URI_TOKEN_IDS)
+DEFINE_VECTOR256_FIELD_1(sfURITokenIDs, 2, 1)
+DEFINE_VECTOR256_FIELD_1(sfURITokenIDs, 2, 2)
+DEFINE_VECTOR256_FIELD_1(sfURITokenIDs, 2, 3)
+DEFINE_VECTOR256_FIELD_1(sfURITokenIDs, 2, 4)
+DEFINE_VECTOR256_FIELD_1(sfURITokenIDs, 2, 5)
+DEFINE_VECTOR256_FIELD_1(sfURITokenIDs, 2, 6)
+DEFINE_VECTOR256_FIELD_2(sfURITokenIDs, 2, 7)
+DEFINE_VECTOR256_FIELD_2(sfURITokenIDs, 2, 8)
+DEFINE_VECTOR256_FIELD_2(sfURITokenIDs, 2, 9)
+DEFINE_VECTOR256_FIELD_2(sfURITokenIDs, 2, 10)
+DEFINE_VECTOR256_FIELD_2(sfURITokenIDs, 2, 11)
+DEFINE_VECTOR256_FIELD_2(sfURITokenIDs, 2, 12)
+DEFINE_VECTOR256_FIELD_2(sfURITokenIDs, 2, 13)
+DEFINE_VECTOR256_FIELD_2(sfURITokenIDs, 2, 14)
+DEFINE_VECTOR256_FIELD_2(sfURITokenIDs, 2, 15)
+DEFINE_VECTOR256_FIELD_2(sfURITokenIDs, 2, 16)
+
+// #define DEFINE_ONE_URI_TOKEN_IDS(idx)                                          \
+//   DEFINE_VECTOR256_FIELD_2(sfURITokenIDs, 2, idx)
+// DEFINE_MULTIPLE_FIELD_INDICEX_16(DEFINE_ONE_URI_TOKEN_IDS)
 
 DEFINE_PATHSET_FIELD(sfPaths, 1)
 
